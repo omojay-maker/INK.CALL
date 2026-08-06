@@ -1,0 +1,38 @@
+services:
+  call-service:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - "127.0.0.1:8090:8090"
+    depends_on:
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  coturn:
+    image: coturn/coturn:4.6-alpine
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./turnserver.conf.example:/etc/coturn/turnserver.conf:ro
+      - ./certs:/etc/coturn/certs:ro
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+
+volumes:
+  redis-data:

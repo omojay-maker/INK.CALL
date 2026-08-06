@@ -1,0 +1,65 @@
+# Render Blueprint — INK.CALL (Node.js + Socket.IO signaling)
+#
+# Deploy: push this folder as its own GitHub repo, then in Render:
+#   "New +" → "Blueprint" → pick the repo.
+#
+# Wire the other components to this service's public URL:
+#   - INK.APP  → CALL_SERVICE_PUBLIC_URL = https://ink-call.onrender.com
+#   - INK.ADMIN → CALL_SERVICE_PUBLIC_URL = https://ink-call.onrender.com
+#   - INK.CALL → APP_ORIGIN must include the INK.APP public origin.
+#
+# CALL_JWT_SECRET must MATCH INK.APP's CALL_JWT_SECRET (both sign/verify the
+# call tokens). The MySQL DB is shared with INK.APP.
+#
+# TURN is optional at boot but recommended for calls behind strict NATs.
+
+services:
+  - type: web
+    name: ink-call
+    runtime: node
+    nodeVersion: 22.x
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health/live
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_ORIGIN
+        value: https://ink-app.onrender.com
+      - key: CALL_JWT_SECRET
+        sync: false
+      - key: CALL_JWT_ISSUER
+        value: ink-web
+      - key: CALL_JWT_AUDIENCE
+        value: ink-call-service
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: ink-call-redis
+          property: connectionString
+      - key: TURN_URL
+        sync: false
+      - key: TURN_TLS_URL
+        sync: false
+      - key: TURN_SHARED_SECRET
+        sync: false
+
+  # Optional — delete to run on the in-process call registry (single instance).
+  # Use it for multi-instance fan-out.
+  - type: redis
+    name: ink-call-redis
+    plan: free
+    maxmemoryPolicy: noeviction
