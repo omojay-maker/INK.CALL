@@ -35,6 +35,8 @@ services:
         value: ink-web
       - key: CALL_JWT_AUDIENCE
         value: ink-call-service
+      - key: ADMIN_SERVICE_SECRET
+        sync: false
       - key: DB_HOST
         sync: false
       - key: DB_PORT

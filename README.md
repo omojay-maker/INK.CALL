@@ -113,7 +113,7 @@ WebRTC camera/microphone access requires HTTPS outside localhost.
 1. Push this folder as its own GitHub repo.
 2. In Render: **New + → Blueprint** and pick the repo — `render.yaml` provisions
    the Node web service (and an optional Redis instance) automatically.
-3. Set the secrets it prompts for (`CALL_JWT_SECRET`, `DB_*`).
+3. Set the secrets it prompts for (`CALL_JWT_SECRET`, `ADMIN_SERVICE_SECRET`, `DB_*`).
    `CALL_JWT_SECRET` must match the one configured in **INK.APP**.
 4. Set `APP_ORIGIN` to the INK app's origin (e.g. `https://ink-app.onrender.com`).
 5. Point **INK.APP**'s `CALL_SERVICE_PUBLIC_URL` at this service's URL

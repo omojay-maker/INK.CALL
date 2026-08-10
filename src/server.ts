@@ -31,6 +31,18 @@ app.get("/health/ready", async (_request, reply) => {
   }
 });
 
+app.post("/internal/admin/probe", async (request, reply) => {
+  if (request.headers["x-ink-admin-secret"] !== config.ADMIN_SERVICE_SECRET) {
+    return reply.code(401).send({ error: "Unauthorized" });
+  }
+  try {
+    await db.query("SELECT 1");
+    return { status: "ready", signaling: "accepting_connections" };
+  } catch {
+    return reply.code(503).send({ error: "Database unavailable" });
+  }
+});
+
 // TURN is recommended but not mandatory to boot: without it the service runs
 // on STUN-only, which still works for most peers (calls behind strict NATs may
 // fail). Provision a Coturn server and set TURN_URL / TURN_TLS_URL /
