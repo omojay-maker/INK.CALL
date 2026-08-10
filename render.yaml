@@ -21,7 +21,7 @@ services:
     buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /health/live
-    autoDeploy: true
+    autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
         value: production
@@ -47,7 +47,7 @@ services:
         sync: false
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: ink-call-redis
           property: connectionString
       - key: TURN_URL
@@ -59,7 +59,8 @@ services:
 
   # Optional — delete to run on the in-process call registry (single instance).
   # Use it for multi-instance fan-out.
-  - type: redis
+  - type: keyvalue
     name: ink-call-redis
     plan: free
+    ipAllowList: []
     maxmemoryPolicy: noeviction
