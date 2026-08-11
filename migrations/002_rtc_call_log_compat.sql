@@ -3,9 +3,25 @@ ALTER TABLE rtc_calls
     ADD COLUMN IF NOT EXISTS legacy_call_id INT NULL;
 
 ALTER TABLE rtc_calls
-    MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    ADD UNIQUE KEY IF NOT EXISTS uq_rtc_calls_id (id),
-    ADD UNIQUE KEY IF NOT EXISTS uq_rtc_calls_legacy (legacy_call_id);
+    MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+SET @sql = IF(
+    EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'rtc_calls' AND index_name = 'uq_rtc_calls_id'),
+    'SELECT 1',
+    'ALTER TABLE rtc_calls ADD UNIQUE KEY uq_rtc_calls_id (id)'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'rtc_calls' AND index_name = 'uq_rtc_calls_legacy'),
+    'SELECT 1',
+    'ALTER TABLE rtc_calls ADD UNIQUE KEY uq_rtc_calls_legacy (legacy_call_id)'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 INSERT IGNORE INTO rtc_calls (
     call_id, legacy_call_id, caller_id, callee_id, call_type, status,

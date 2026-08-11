@@ -1,4 +1,5 @@
 import mysql, { type Pool, type RowDataPacket } from "mysql2/promise";
+import { readFileSync } from "node:fs";
 import { config } from "./config.js";
 
 export const db: Pool = mysql.createPool({
@@ -9,7 +10,11 @@ export const db: Pool = mysql.createPool({
   password: config.DB_PASSWORD,
   connectionLimit: config.DB_POOL_SIZE,
   enableKeepAlive: true,
-  charset: "utf8mb4"
+  charset: "utf8mb4",
+  ssl: config.DB_SSL_CA ? {
+    ca: readFileSync(config.DB_SSL_CA, "utf8"),
+    rejectUnauthorized: config.DB_SSL_VERIFY
+  } : undefined
 });
 
 export async function isActiveUser(userId: number): Promise<boolean> {

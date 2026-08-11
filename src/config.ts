@@ -15,6 +15,8 @@ const schema = z.object({
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(50).default(10),
+  DB_SSL_CA: z.string().optional(),
+  DB_SSL_VERIFY: z.string().default("false").transform((value) => value === "true"),
   REDIS_URL: z.string().optional(),
   STUN_URL: z.string().default("stun:stun.l.google.com:19302"),
   TURN_URL: z.string().optional(),
