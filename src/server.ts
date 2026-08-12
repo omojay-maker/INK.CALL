@@ -21,6 +21,13 @@ await app.register(cors, {
 });
 await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
 
+app.get("/", async () => ({
+  service: "INK Call",
+  status: "online",
+  message: "Realtime calling is ready. Open calls from the INK app.",
+  app: config.APP_ORIGIN.split(",")[0]?.trim(),
+  health: "/health/ready"
+}));
 app.get("/health/live", async () => ({ status: "ok" }));
 app.get("/health/ready", async (_request, reply) => {
   try {
