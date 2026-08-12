@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   canCall,
   createCall,
+  createMissedCallNotification,
   endCall,
   getOpenCallByUser,
   getResumableCall,
@@ -91,6 +92,14 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
         if (!(await registry.is(input.callId, user.id))) return;
         await registry.release(input.callId, user.id, input.calleeId);
         await endCall(input.callId, "missed", user.id);
+        try {
+          await createMissedCallNotification(user.id, input.calleeId, user.name, input.callType);
+        } catch (error) {
+          callLog("missed_notification_failed", {
+            callId: input.callId,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
         io.to(roomForUser(user.id)).emit("call:ended", {
           callId: input.callId,
           reason: "missed"

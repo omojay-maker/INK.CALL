@@ -99,6 +99,20 @@ export async function userBelongsToCall(callId: string, userId: number): Promise
   return rows.length === 1;
 }
 
+export async function createMissedCallNotification(
+  callerId: number,
+  calleeId: number,
+  callerName: string,
+  callType: "audio" | "video"
+): Promise<void> {
+  const label = callType === "video" ? "video" : "voice";
+  await db.execute(
+    `INSERT INTO notifications (user_id, actor_id, type, message, link)
+     VALUES (?, ?, 'missed_call', ?, ?)`,
+    [calleeId, callerId, `Missed ${label} call from ${callerName}`, `chat?id=${callerId}`]
+  );
+}
+
 export async function getResumableCall(
   callId: string,
   userId: number,
