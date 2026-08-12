@@ -6,6 +6,7 @@ import {
   createMissedCallNotification,
   endCall,
   getOpenCallByUser,
+  getPendingIncomingCall,
   getResumableCall,
   markAnswered,
   userBelongsToCall,
@@ -57,6 +58,21 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
   socket.join(roomForUser(user.id));
   socket.emit("call:ready", { userId: user.id });
   callLog("connected", { userId: user.id, socketId: socket.id });
+  void getPendingIncomingCall(user.id).then((pending) => {
+    if (!pending) return;
+    socket.emit("call:incoming", pending);
+    callLog("incoming_recovered", {
+      callId: pending.callId,
+      callerId: pending.caller.id,
+      calleeId: user.id,
+      socketId: socket.id
+    });
+  }).catch((error) => {
+    callLog("incoming_recovery_failed", {
+      userId: user.id,
+      error: error instanceof Error ? error.message : String(error)
+    });
+  });
 
   socket.on("call:invite", async (raw, ack) => {
     try {

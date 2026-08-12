@@ -165,3 +165,35 @@ export async function getOpenCallByUser(
     peerId: Number(row.caller_id) === userId ? Number(row.callee_id) : Number(row.caller_id)
   };
 }
+
+export async function getPendingIncomingCall(userId: number): Promise<{
+  callId: string;
+  callType: "audio" | "video";
+  caller: { id: number; name: string; avatar?: string };
+} | null> {
+  const [rows] = await db.execute<RowDataPacket[]>(
+    `SELECT c.call_id, c.call_type, c.caller_id,
+            COALESCE(NULLIF(u.full_name, ''), u.username, CONCAT('User ', u.UID)) AS caller_name,
+            u.profile_picture
+     FROM rtc_calls c
+     JOIN users u ON u.UID = c.caller_id
+     WHERE c.callee_id = ?
+       AND c.status = 'ringing'
+       AND c.ended_at IS NULL
+       AND c.initiated_at >= NOW() - INTERVAL 45 SECOND
+     ORDER BY c.initiated_at DESC
+     LIMIT 1`,
+    [userId]
+  );
+  if (rows.length !== 1) return null;
+  const row = rows[0]!;
+  return {
+    callId: String(row.call_id),
+    callType: row.call_type as "audio" | "video",
+    caller: {
+      id: Number(row.caller_id),
+      name: String(row.caller_name),
+      avatar: row.profile_picture ? String(row.profile_picture) : undefined
+    }
+  };
+}
