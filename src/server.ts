@@ -111,7 +111,12 @@ if (config.REDIS_URL) {
   registry = new CallRegistry();
 }
 
-io.use((socket, next) => void socketAuth(socket, next));
+io.use((socket, next) => void socketAuth(socket, (error) => {
+  if (error) {
+    app.log.warn({ socketId: socket.id, address: socket.handshake.address }, "call socket authentication failed");
+  }
+  next(error);
+}));
 io.on("connection", (socket) => registerSignaling(io, socket, registry));
 
 const shutdown = async (signal: string) => {

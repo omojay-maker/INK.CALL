@@ -24,6 +24,10 @@ const roomForUser = (id: number) => `user:${id}`;
 const ringTimers = new Map<string, NodeJS.Timeout>();
 const disconnectTimers = new Map<number, NodeJS.Timeout>();
 
+function callLog(event: string, details: Record<string, unknown>): void {
+  console.info(JSON.stringify({ scope: "call.signaling", event, ...details }));
+}
+
 function ackError(ack: unknown, message: string) {
   if (typeof ack === "function") ack({ ok: false, error: message });
 }
@@ -51,6 +55,7 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
   disconnectTimers.delete(user.id);
   socket.join(roomForUser(user.id));
   socket.emit("call:ready", { userId: user.id });
+  callLog("connected", { userId: user.id, socketId: socket.id });
 
   socket.on("call:invite", async (raw, ack) => {
     try {
@@ -66,6 +71,15 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
         await registry.release(input.callId, user.id, input.calleeId);
         throw error;
       }
+
+      const recipientSockets = await io.in(roomForUser(input.calleeId)).fetchSockets();
+      callLog("invite", {
+        callId: input.callId,
+        callerId: user.id,
+        calleeId: input.calleeId,
+        callType: input.callType,
+        recipientSockets: recipientSockets.length
+      });
 
       io.to(roomForUser(input.calleeId)).emit("call:incoming", {
         callId: input.callId,
@@ -88,7 +102,8 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
       }, 45_000));
 
       if (typeof ack === "function") ack({ ok: true, callId: input.callId });
-    } catch {
+    } catch (error) {
+      callLog("invite_failed", { callerId: user.id, error: error instanceof Error ? error.message : String(error) });
       ackError(ack, "Invalid call invitation");
     }
   });
@@ -102,6 +117,7 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
       clearTimeout(ringTimers.get(input.callId));
       ringTimers.delete(input.callId);
       await markAnswered(input.callId);
+      callLog("accepted", { callId: input.callId, userId: user.id, targetUserId: input.targetUserId });
       io.to(roomForUser(input.targetUserId)).emit("call:accepted", {
         callId: input.callId,
         by: user.id
@@ -191,6 +207,7 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
       ringTimers.delete(input.callId);
       await registry.release(input.callId, user.id, input.targetUserId);
       await endCall(input.callId, input.reason, user.id);
+      callLog("ended", { callId: input.callId, userId: user.id, targetUserId: input.targetUserId, reason: input.reason });
       io.to(roomForUser(input.targetUserId)).emit("call:ended", {
         callId: input.callId,
         reason: input.reason,
@@ -211,6 +228,7 @@ export function registerSignaling(io: Server, socket: Socket, registry: CallRegi
   });
 
   socket.on("disconnect", () => {
+    callLog("disconnected", { userId: user.id, socketId: socket.id });
     void io.in(roomForUser(user.id)).fetchSockets().then((remaining) => {
       if (remaining.length > 0 || disconnectTimers.has(user.id)) return;
       const timer = setTimeout(() => {
