@@ -21,6 +21,8 @@ const schema = z.object({
   STUN_URL: z.string().default("stun:stun.l.google.com:19302"),
   TURN_URL: z.string().optional(),
   TURN_TLS_URL: z.string().optional(),
+  TURN_USERNAME: z.string().optional(),
+  TURN_CREDENTIAL: z.string().optional(),
   TURN_SHARED_SECRET: z.string().optional(),
   TURN_TTL_SECONDS: z.coerce.number().int().min(300).max(86400).default(3600),
   ADMIN_SERVICE_SECRET: z.string().min(32)

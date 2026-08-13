@@ -122,8 +122,10 @@ WebRTC camera/microphone access requires HTTPS outside localhost.
 Notes:
 
 - The service starts **without TURN** (STUN-only) — it logs a warning and still
-  runs; calls behind strict NATs may fail. Add `TURN_URL` / `TURN_TLS_URL` /
-  `TURN_SHARED_SECRET` from a Coturn server for reliable connectivity.
+  runs; calls behind strict NATs may fail. For a managed provider, add
+  `TURN_URL`, `TURN_TLS_URL`, `TURN_USERNAME`, and `TURN_CREDENTIAL`. For a
+  self-hosted Coturn server, use `TURN_SHARED_SECRET` instead of the static
+  username and credential.
 - **Redis is optional.** Without `REDIS_URL` the call registry is in-process
   (fine for a single instance). Add the bundled Render Redis for multi-instance
   fan-out.

@@ -54,9 +54,13 @@ app.post("/internal/admin/probe", async (request, reply) => {
 // on STUN-only, which still works for most peers (calls behind strict NATs may
 // fail). Provision a Coturn server and set TURN_URL / TURN_TLS_URL /
 // TURN_SHARED_SECRET for reliable connectivity.
-if (config.NODE_ENV === "production" && !config.TURN_URL) {
+if (
+  config.NODE_ENV === "production" &&
+  (!config.TURN_URL ||
+    (!(config.TURN_USERNAME && config.TURN_CREDENTIAL) && !config.TURN_SHARED_SECRET))
+) {
   app.log.warn(
-    "TURN server not configured — calls may fail behind strict NATs. Set TURN_URL and TURN_SHARED_SECRET to fix."
+    "TURN server not configured - calls may fail behind strict NATs. Configure static credentials or a shared secret."
   );
 }
 

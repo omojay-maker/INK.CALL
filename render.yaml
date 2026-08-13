@@ -60,6 +60,10 @@ services:
         sync: false
       - key: TURN_TLS_URL
         sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false
       - key: TURN_SHARED_SECRET
         sync: false
 
