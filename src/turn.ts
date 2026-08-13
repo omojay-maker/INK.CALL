@@ -1,6 +1,12 @@
 import { createHmac } from "node:crypto";
 import { config } from "./config.js";
 
+export function getTurnConfigurationMode() {
+  if (config.TURN_URL && config.TURN_USERNAME && config.TURN_CREDENTIAL) return "static";
+  if (config.TURN_URL && config.TURN_SHARED_SECRET) return "shared-secret";
+  return "disabled";
+}
+
 export function createTurnCredentials(userId: number) {
   const expiresAt = Math.floor(Date.now() / 1000) + config.TURN_TTL_SECONDS;
   const iceServers: Array<{

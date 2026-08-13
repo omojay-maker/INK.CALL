@@ -9,7 +9,7 @@ import { createClient } from "redis";
 import { config } from "./config.js";
 import { db } from "./db.js";
 import { socketAuth, verifyCallToken } from "./auth.js";
-import { createTurnCredentials } from "./turn.js";
+import { createTurnCredentials, getTurnConfigurationMode } from "./turn.js";
 import { registerSignaling } from "./signaling.js";
 import { CallRegistry } from "./call-registry.js";
 
@@ -28,11 +28,11 @@ app.get("/", async () => ({
   app: config.APP_ORIGIN.split(",")[0]?.trim(),
   health: "/health/ready"
 }));
-app.get("/health/live", async () => ({ status: "ok" }));
+app.get("/health/live", async () => ({ status: "ok", turn: getTurnConfigurationMode() }));
 app.get("/health/ready", async (_request, reply) => {
   try {
     await db.query("SELECT 1");
-    return { status: "ready" };
+    return { status: "ready", turn: getTurnConfigurationMode() };
   } catch {
     return reply.code(503).send({ status: "not_ready" });
   }
